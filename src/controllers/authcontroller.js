@@ -12,7 +12,7 @@ const generateToken = (userId) => {
 exports.signup = async (req, res) => {
     try {
         const { name, email, password } = req.body;
-        console.log(req.body)
+
         const existingUser = await db("Users").where({ email }).first();
         if (existingUser) {
             return res.status(400).json({ message: "User already exists" });

@@ -159,7 +159,6 @@ exports.getCompanyById = async (req, res) => {
 
 exports.getComapnyNameById = async (req, res) => {
     try {
-        console.log(`SELECT * FROM Companies WHERE userid = ${req.user.id}`)
 
         const company = await db("Companies").where({ userid: req.user.id });
         const data = company.map((item) => {

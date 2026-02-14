@@ -130,7 +130,6 @@ exports.getProduct = async (req, res) => {
                     0
                 );
                 const initialVariant = variants[0] || null;
-                console.log('initialVariant', initialVariant)
                 // Default image
                 let image = null;
 
@@ -142,7 +141,6 @@ exports.getProduct = async (req, res) => {
                             IsPrimary: 1,
                         })
                         .first();
-                    console.log(primaryImage, initialVariant.VariantID)
                     image = primaryImage?.ImageUrl ? `${process.env.BASE_URL}/uploads/company/${primaryImage?.ImageUrl}` : null;
                 }
 
@@ -249,7 +247,6 @@ exports.getProductById = async (req, res) => {
     try {
 
         const { id, color, VariantID } = req.body;
-
         let query = `
             SELECT TOP 1
                 p.ProductID,
@@ -279,7 +276,6 @@ exports.getProductById = async (req, res) => {
         }
 
         const result = await db.raw(query, params);
-        console.log(id, color)
         const item = result[0];
 
         if (!item) {
@@ -297,7 +293,7 @@ exports.getProductById = async (req, res) => {
         const sizes = await db("ProductVariants")
             .where({ ProductID: item.ProductID, Color: color })
             .select("Size");
-
+        console.log('sizes', sizes)
         const formattedImages = images.map(
             img => `${process.env.BASE_URL}/uploads/company/${img.ImageUrl}`
         );
@@ -310,10 +306,12 @@ exports.getProductById = async (req, res) => {
                 color: COLOR_MAP[key] || "#CCCCCC", // fallback
             };
         });
+        const uniqueColors = Array.from(
+            new Map(newcolor.map(item => [item.name.trim().toLowerCase(), item])).values()
+        );
 
 
 
-        console.log('🎨👓', newcolor);
         const data = {
             id: item.ProductID,
             VariantID: item.VariantID,
@@ -324,8 +322,8 @@ exports.getProductById = async (req, res) => {
             minOrder: item.Quantity,
             unitsPerCase: item.Unit,
             description: item.ProductDescription,
-            colors: newcolor,
-            sizes: sizes > 1 ? colors.map((c) => c.Size) : [],
+            colors: uniqueColors,
+            sizes: sizes.length > 1 ? sizes.map((c) => c.Size) : [],
             specs: {
                 Material: "Full Grain Leather",
                 SKU: "HG-TOTE-SADL",
@@ -336,7 +334,7 @@ exports.getProductById = async (req, res) => {
             },
             images: formattedImages,
         };
-        console.log(data);
+        console.log(data)
         res.json(data);
 
     } catch (error) {
@@ -423,11 +421,12 @@ exports.CheckIfVariantsExists = async (req, res) => {
         const variants = await db("ProductVariants")
             .select("VariantID", "Color", "Size")
             .where({ ProductID });
+        console.log(variants[0])
         const variantsdata = variants[0] || null;
         // Filter variants where both Color and Size exist
         const validVariants = variants.filter(v =>
-            v.Color && v.Color.trim() !== "" &&
-            v.Size && v.Size.trim() !== ""
+            v.Color || v.Color.trim() !== "" &&
+            v.Size || v.Size.trim() !== ""
         );
 
         if (validVariants.length > 0) {
@@ -445,7 +444,7 @@ exports.CheckIfVariantsExists = async (req, res) => {
         return res.status(200).json({
             success: false,
             message: "Product variants not exists",
-            data: [],
+            color: [],
             VariantID: variantsdata.VariantID
         });
 

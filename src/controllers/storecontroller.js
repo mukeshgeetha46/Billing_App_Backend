@@ -78,7 +78,6 @@ exports.getStore = async (req, res) => {
 
 exports.getCompanyById = async (req, res) => {
     try {
-        console.log(req.params.id)
         const company = await db("shops").where({ ShopId: req.params.id });
         const data = company.map((item) => {
             return {
@@ -115,7 +114,6 @@ exports.getCompanyById = async (req, res) => {
                 },
             };
         });
-        console.log(data[0])
         res.json(data[0]);
     } catch (error) {
         console.log(error)
